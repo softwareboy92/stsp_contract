@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HandleMsg",
+  "anyOf": [
+    {
+      "type": "object",
+      "required": [
+        "register_patient"
+      ],
+      "properties": {
+        "register_patient": {
+          "type": "object",
+          "required": [
+            "patient"
+          ],
+          "properties": {
+            "patient": {
+              "$ref": "#/definitions/Patient"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "Patient": {
+      "type": "object",
+      "required": [
+        "age",
+        "contact",
+        "id",
+        "ismarried",
+        "name",
+        "nation",
+        "occupation",
+        "regtime",
+        "sex",
+        "telephonenum"
+      ],
+      "properties": {
+        "age": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "ismarried": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "nation": {
+          "type": "string"
+        },
+        "occupation": {
+          "type": "string"
+        },
+        "regtime": {
+          "type": "string"
+        },
+        "sex": {
+          "type": "string"
+        },
+        "telephonenum": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

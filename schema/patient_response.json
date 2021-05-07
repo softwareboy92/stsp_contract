@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PatientResponse",
+  "type": "object",
+  "properties": {
+    "patient": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Patient"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "Patient": {
+      "type": "object",
+      "required": [
+        "age",
+        "contact",
+        "id",
+        "ismarried",
+        "name",
+        "nation",
+        "occupation",
+        "regtime",
+        "sex",
+        "telephonenum"
+      ],
+      "properties": {
+        "age": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "ismarried": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "nation": {
+          "type": "string"
+        },
+        "occupation": {
+          "type": "string"
+        },
+        "regtime": {
+          "type": "string"
+        },
+        "sex": {
+          "type": "string"
+        },
+        "telephonenum": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
