@@ -1,4 +1,4 @@
-use crate::state::{User, Application};
+use crate::state::{User, Application, CreateApplication};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -14,16 +14,16 @@ pub struct MigrateMsg {}
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
     // 创建用户
-    SetUser {
+    CreateUser {
         user: User,
     },
     // 发起申请
-    SetApplication {
-        application: Application
+    CreateApplication {
+        new_application: CreateApplication
     },
     // 访问申请
-    GetApplication {
-        application_key: String
+    AuditApplication {
+        application: Application
     },
 }
 

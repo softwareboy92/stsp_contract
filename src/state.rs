@@ -46,14 +46,24 @@ pub struct User {
 /// 申请
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Application {
+    // 企业名称
+    pub enterprise: String,
+    // 时间戳
+    pub time_stamp: u64,
     // 申请编号
     pub application_id: String,
     // 申请类别
     pub application_type: String,
+    // 申请条目
+    pub application_entity: String,
     // 数据条目
     pub data: Vec<Data>,
     // 访问权限
     pub permission: Vec<String>,
+    // 审核结果
+    pub result: u8,
+    // 原因
+    pub reason: String,
 }
 
 /// 共享数据项
@@ -63,4 +73,23 @@ pub struct Data {
     pub data_name: String,
     // 数据项哈希
     pub data_hash: String,
+}
+
+// Dto
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct CreateApplication {
+    // 企业名称
+    pub enterprise: String,
+    // 时间戳
+    pub time_stamp: u64,
+    // 申请编号
+    pub application_id: String,
+    // 申请类别
+    pub application_type: String,
+    // 申请条目
+    pub application_entity: String,
+    // 数据条目
+    pub data: Vec<Data>,
+    // 访问权限
+    pub permission: Vec<String>,
 }

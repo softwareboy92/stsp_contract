@@ -14,6 +14,8 @@ pub const GOVERNMENT: &str = "ROLE_0003";// 政府
 pub const BANK: &str = "ROLE_0004";// 银行
 pub const SYSTEM_ORG: &str = "SYSTEM";// 系统组织
 pub const SYSTEM_ID: &str = "SYSTEM";// 系统编号
+pub const APPROVED: u8 = 1;// 通过
+pub const REJECTED: u8 = 2;// 驳回
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -49,15 +51,15 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
     match msg {
-        HandleMsg::SetUser {
+        HandleMsg::CreateUser {
             user
-        } => set_user(deps, env, user),
-        HandleMsg::SetApplication {
+        } => create_user(deps, env, user),
+        HandleMsg::CreateApplication {
+            new_application
+        } => create_application(deps, env, new_application),
+        HandleMsg::AuditApplication {
             application
-        } => set_application(deps, env, application),
-        HandleMsg::GetApplication {
-            application_key
-        } => get_application(deps, env, application_key),
+        } => audit_application(deps, env, application),
     }
 }
 
@@ -70,7 +72,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 }
 
 /// 创建用户
-pub fn set_user<S: Storage, A: Api, Q: Querier>(
+pub fn create_user<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
     user: User,
@@ -115,27 +117,33 @@ pub fn set_user<S: Storage, A: Api, Q: Querier>(
 
     Ok(HandleResponse {
         messages: vec![],
-        log: vec![log("set_user", &log_value)],
+        log: vec![log("create_user", &log_value)],
         data: None,
     })
 }
 
 /// 提交申请
-pub fn set_application<S: Storage, A: Api, Q: Querier>(
+pub fn create_application<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
-    application: Application,
+    new_application: CreateApplication,
 ) -> StdResult<HandleResponse> {
-    if application.application_id.is_empty() {
+    if new_application.enterprise.is_empty() {
+        return Err(StdError::generic_err("enterprise is empty"))
+    } else if !(new_application.time_stamp > 0) {
+        return Err(StdError::generic_err("time stamp is invalid"))
+    } else if new_application.application_id.is_empty() {
         return Err(StdError::generic_err("application id is empty"));
-    } else if application.application_type.is_empty() {
+    } else if new_application.application_entity.is_empty() {
+        return Err(StdError::generic_err("application entity is empty"))
+    } else if new_application.application_type.is_empty() {
         return Err(StdError::generic_err("application type is empty"));
-    } else if application.data.is_empty() {
+    } else if new_application.data.is_empty() {
         return Err(StdError::generic_err("application data is empty"));
-    } else if application.permission.is_empty() {
+    } else if new_application.permission.is_empty() {
         return Err(StdError::generic_err("application permission is empty"));
     }
-    let application_key = application.application_id.to_string();
+    let application_key = new_application.application_id.to_string();
     let application_option =  application_store_read(&deps.storage)
         .may_load(application_key.as_bytes())?;
     if application_option.is_some() {
@@ -149,53 +157,50 @@ pub fn set_application<S: Storage, A: Api, Q: Querier>(
     if !user_option.unwrap().role.contains(&ENTERPRISE.to_string()) {
         return Err(StdError::generic_err("permission denied"));
     }
+    let application = Application {
+        enterprise: new_application.enterprise,
+        time_stamp: new_application.time_stamp,
+        application_id: new_application.application_id,
+        application_type: new_application.application_type,
+        application_entity: new_application.application_entity,
+        data: new_application.data.clone(),
+        permission: new_application.permission.clone(),
+        result: 0,
+        reason: "".to_string(),
+    };
     application_store(&mut deps.storage)
         .save(application_key.as_bytes(), &application)?;
     let log_value = serde_json_wasm::to_string(&application).unwrap();
 
     Ok(HandleResponse {
         messages: vec![],
-        log: vec![log("set_application", &log_value)],
+        log: vec![log("create_application", &log_value)],
         data: None,
     })
 }
 
-/// 访问申请
-pub fn get_application<S: Storage, A: Api, Q: Querier>(
+/// 审核申请
+pub fn audit_application<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
-    application_key: String,
+    application: Application
 ) -> StdResult<HandleResponse> {
+    if !application.permission.contains(&_env.message.sender.to_string()) {
+        return Err(StdError::generic_err("permission denied"));
+    }
+    let application_key = application.application_id.to_string();
     let application_option = application_store_read(&deps.storage)
         .may_load(application_key.as_bytes())?;
     if application_option.is_none() {
         return Err(StdError::generic_err("application not exist"));
     }
-    let application = application_option.unwrap();
-    // let user_option = user_store_read(&deps.storage)
-    //     .may_load(_env.message.sender.to_string().as_bytes())?;
-    // if user_option.is_none() {
-    //     return Err(StdError::generic_err("user not exist"));
-    // }
-    // let user = user_option.unwrap();
-    // let mut has_permission = false;
-    // for item in application.permission.clone() {
-    //     if user.role.contains(&item) {
-    //         has_permission = true;
-    //         break;
-    //     }
-    // }
-    // if !has_permission {
-    //     return Err(StdError::generic_err("permission denied"));
-    // }
-    if !application.permission.contains(&_env.message.sender.to_string()) {
-        return Err(StdError::generic_err("permission denied"));
-    }
+    application_store(&mut deps.storage)
+        .save(application_key.as_bytes(), &application)?;
     let log_value = serde_json_wasm::to_string(&application).unwrap();
 
     Ok(HandleResponse {
         messages: vec![],
-        log: vec![log("get_application", &log_value)],
+        log: vec![log("audit_application", &log_value)],
         data: None,
     })
 }
